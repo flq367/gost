@@ -41,4 +41,23 @@ fi
 echo "正在清理临时文件..."
 rm -rf "$TEMP_DIR"
 
-echo "任务完成！"
+# 创建 /etc/systemd/system/gost.service 文件
+SERVICE_FILE="/etc/systemd/system/gost.service"
+echo "正在创建 systemd 服务文件: $SERVICE_FILE"
+
+cat <<EOF | sudo tee "$SERVICE_FILE" > /dev/null
+[Unit]
+Description=GO Simple Tunnel
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/root/gost
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "服务和依赖已安装"

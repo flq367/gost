@@ -3,9 +3,8 @@
 # 默认下载链接
 DEFAULT_URL="https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz"
 
-# 提示用户输入下载链接
-echo "请输入下载链接 (默认: $DEFAULT_URL):"
-read -r DOWNLOAD_URL
+# 从命令行参数读取下载链接
+DOWNLOAD_URL="$1"
 
 # 如果用户未输入，则使用默认链接
 if [ -z "$DOWNLOAD_URL" ]; then
@@ -29,9 +28,9 @@ GOST_FILE=$(find "$TEMP_DIR" -type f -name "gost")
 
 if [ -f "$GOST_FILE" ]; then
     # 将 'gost' 文件移动到当前目录
-    mv "$GOST_FILE" ./gost
-    chmod +x ./gost
-    echo "文件已提取并保存为 ./gost"
+    mv "$GOST_FILE" /root/gost
+    chmod +x /root/gost
+    echo "文件已提取并保存为 /root/gost"
 else
     echo "未找到 'gost' 文件，操作失败"
     exit 1

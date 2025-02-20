@@ -41,6 +41,16 @@ check_dependencies() {
     done
 }
 
+# 检查当前目录是否已存在 gost 文件
+check_gost_file() {
+    if [ -f ./gost ]; then
+        echo "当前目录中已存在 gost 文件，跳过下载和解压过程。"
+        return 0
+    else
+        return 1
+    fi
+}
+
 # 下载并解压 gost 文件
 download_and_extract_gost() {
     echo "请输入下载链接（按回车使用默认链接）："
@@ -141,7 +151,9 @@ configure_and_run_gost() {
 # 主程序入口
 main() {
     check_dependencies
-    download_and_extract_gost
+    if ! check_gost_file; then
+        download_and_extract_gost
+    fi
     configure_and_run_gost
 }
 

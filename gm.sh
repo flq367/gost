@@ -17,7 +17,21 @@ while true; do
     case $choice in
         1)
             echo "正在新建 GOST 服务..."
-            curl -s https://raw.githubusercontent.com/flq367/gost/refs/heads/main/newgost.sh | bash
+            
+            # 提示用户输入下载链接
+            read -p "请输入 GOST 下载链接 (回车使用默认链接): " download_url
+            
+            # 提示用户输入中转机端口
+            read -p "请输入中转机端口: " relay_port
+            
+            # 提示用户输入落地机 IP
+            read -p "请输入落地机 IP: " destination_ip
+            
+            # 提示用户输入落地机端口
+            read -p "请输入落地机端口: " destination_port
+            
+            # 调用 newgost.sh 脚本并传递参数
+            curl -s https://raw.githubusercontent.com/flq367/gost/refs/heads/main/newgost.sh | bash -s "$download_url" "$relay_port" "$destination_ip" "$destination_port"
             read -p "按回车键继续..."
             ;;
             

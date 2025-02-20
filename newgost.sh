@@ -1,30 +1,65 @@
-#!/bin/bash
+#!/bin/sh
 
-while true; do
-    clear
-    echo "================================"
-    echo "        GOST 端口转发        "
-    echo "================================"
-    echo "1. 新建 GOST 服务"
-    echo "2. 新增 GOST 服务"
-    echo "3. 手动修改 GOST 服务"
-    echo "4. 删除 GOST 服务"
-    echo "0. 退出"
-    echo "================================"
-    
-    read -p "请输入选项 [0-4]: " choice
+# 默认下载链接
+DEFAULT_URL="https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz"
 
-    case $choice in
-        1)
-            echo "正在新建 GOST 服务..."
-            
-            # 提示用户输入中转机端口、落地机 IP 和落地机端口
-            read -p "请输入中转机端口: " relay_port
-            read -p "请输入落地机 IP: " destination_ip
-            read -p "请输入落地机端口: " destination_port
-            
-            # 创建 /etc/systemd/system/gost.service 脚本
-            cat <<EOF > /etc/systemd/system/gost.service
+# 提示用户输入下载链接
+echo "请输入下载链接 (默认: $DEFAULT_URL):"
+read -r DOWNLOAD_URL
+
+# 如果用户未输入，则使用默认链接
+if [ -z "$DOWNLOAD_URL" ]; then
+    DOWNLOAD_URL="$DEFAULT_URL"
+fi
+
+# 文件名定义
+TEMP_DIR=$(mktemp -d) # 创建临时目录
+ARCHIVE_FILE="$TEMP_DIR/gost.tar.gz"
+
+# 下载文件
+echo "正在下载文件: $DOWNLOAD_URL"
+wget -O "$ARCHIVE_FILE" "$DOWNLOAD_URL" || { echo "下载失败"; exit 1; }
+
+# 解压文件并提取 'gost'
+echo "正在解压文件..."
+tar -xzvf "$ARCHIVE_FILE" -C "$TEMP_DIR" || { echo "解压失败"; exit 1; }
+
+# 查找解压后的 'gost' 文件
+GOST_FILE=$(find "$TEMP_DIR" -type f -name "gost")
+
+if [ -f "$GOST_FILE" ]; then
+    # 将 'gost' 文件移动到当前目录
+    mv "$GOST_FILE" ./gost
+    chmod +x ./gost
+    echo "文件已提取并保存为 ./gost"
+else
+    echo "未找到 'gost' 文件，操作失败"
+    exit 1
+fi
+
+# 清理临时文件
+echo "正在清理临时文件..."
+rm -rf "$TEMP_DIR"
+
+# 提示用户输入中转机端口、落地机 IP 和落地机端口
+echo "请输入中转机端口:"
+read -r TRANSFER_PORT
+echo "请输入落地机 IP:"
+read -r LANDING_IP
+echo "请输入落地机端口:"
+read -r LANDING_PORT
+
+# 如果用户未输入，退出脚本
+if [ -z "$TRANSFER_PORT" ] || [ -z "$LANDING_IP" ] || [ -z "$LANDING_PORT" ]; then
+    echo "中转机端口、落地机 IP 或落地机端口未输入，操作失败"
+    exit 1
+fi
+
+# 创建 /etc/systemd/system/gost.service 文件
+SERVICE_FILE="/etc/systemd/system/gost.service"
+echo "正在创建 $SERVICE_FILE 文件..."
+
+cat <<EOL > "$SERVICE_FILE"
 [Unit]
 Description=GO Simple Tunnel
 After=network.target
@@ -32,72 +67,22 @@ Wants=network.target
 
 [Service]
 Type=simple
-ExecStart=/root/gost -L tcp://:$relay_port/$destination_ip:$destination_port
+ExecStart=/root/gost -L tcp://:$TRANSFER_PORT/$LANDING_IP:$LANDING_PORT
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
-EOF
+EOL
 
-            # 启用并启动 GOST 服务
-            systemctl daemon-reload
-            systemctl enable gost
-            systemctl start gost
+echo "$SERVICE_FILE 文件创建成功"
 
-            echo "GOST 服务已创建并启动"
-            read -p "按回车键继续..."
-            ;;
-            
-        2)
-            echo "新增 GOST 服务..."
-            read -p "请输入中转机端口: " relay_port
-            read -p "请输入落地机IP: " destination_ip
-            read -p "请输入落地机端口: " destination_port
-            
-            # 在ExecStart行后添加新的转发规则
-            sed -i "/ExecStart=/ s/$/ -L tcp:\/\/:$relay_port\/$destination_ip:$destination_port/" /etc/systemd/system/gost.service
-            
-            # 重新加载systemd配置并重启服务
-            systemctl daemon-reload
-            systemctl enable gost
-            systemctl restart gost
-            
-            echo "GOST 服务已更新并重启"
-            read -p "按回车键继续..."
-            ;;
-            
-        3)
-            echo "手动修改 GOST 服务..."
-            nano /etc/systemd/system/gost.service
-            
-            # 修改后重新加载systemd配置并重启服务
-            systemctl daemon-reload
-            systemctl restart gost
-            
-            echo "配置已更新，服务已重启"
-            read -p "按回车键继续..."
-            ;;
-            
-        4)
-            echo "正在删除 GOST 服务..."
-            systemctl stop gost
-            systemctl disable gost
-            rm -f /etc/systemd/system/gost.service
-            rm -f /root/gost
-            systemctl daemon-reload
-            
-            echo "GOST 服务已完全删除"
-            read -p "按回车键继续..."
-            ;;
-            
-        0)
-            echo "退出程序..."
-            exit 0
-            ;;
-            
-        *)
-            echo "无效选项，请重新选择"
-            read -p "按回车键继续..."
-            ;;
-    esac
-done
+# 重新加载 systemd 配置
+echo "重新加载 systemd 配置..."
+systemctl daemon-reload
+
+# 启用并启动 gost 服务
+echo "启用并启动 gost 服务..."
+systemctl enable gost || { echo "启用服务失败"; exit 1; }
+systemctl start gost || { echo "启动服务失败"; exit 1; }
+
+echo "gost 服务已成功启用并启动！"

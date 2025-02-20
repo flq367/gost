@@ -24,23 +24,9 @@ tar -xzf gost.tar.gz gost || { echo "解压失败！"; exit 1; }
 echo "删除压缩包..."
 rm -f gost.tar.gz
 
-# 提示用户输入中转机端口，循环直到输入有效值
-while [ -z "$FORWARD_PORT" ]; do
-  echo "请输入中转机端口（例如: 8080）："
-  read -r FORWARD_PORT
-done
-
-# 提示用户输入落地机IP，循环直到输入有效值
-while [ -z "$DEST_IP" ]; do
-  echo "请输入落地机IP（例如: 192.168.1.100）："
-  read -r DEST_IP
-done
-
-# 提示用户输入落地机端口，循环直到输入有效值
-while [ -z "$DEST_PORT" ]; do
-  echo "请输入落地机端口（例如: 80）："
-  read -r DEST_PORT
-done
+read -p "请输入中转机端口: " FORWARD_PORT
+read -p "请输入落地机IP: " DEST_IP
+read -p "请输入落地机端口: " DEST_PORT
 
 # 创建systemd服务脚本
 echo "创建gost.service文件..."

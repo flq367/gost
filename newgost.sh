@@ -24,19 +24,23 @@ tar -xzf gost.tar.gz gost || { echo "解压失败！"; exit 1; }
 echo "删除压缩包..."
 rm -f gost.tar.gz
 
-# 提示用户输入中转机端口、落地机ip、落地机端口
-echo "请输入中转机端口（例如: 8080）："
-read -r FORWARD_PORT
-echo "请输入落地机IP（例如: 192.168.1.100）："
-read -r DEST_IP
-echo "请输入落地机端口（例如: 80）："
-read -r DEST_PORT
+# 提示用户输入中转机端口，循环直到输入有效值
+while [ -z "$FORWARD_PORT" ]; do
+  echo "请输入中转机端口（例如: 8080）："
+  read -r FORWARD_PORT
+done
 
-# 检查输入是否为空
-if [ -z "$FORWARD_PORT" ] || [ -z "$DEST_IP" ] || [ -z "$DEST_PORT" ]; then
-  echo "输入不能为空，请重新运行脚本！"
-  exit 1
-fi
+# 提示用户输入落地机IP，循环直到输入有效值
+while [ -z "$DEST_IP" ]; do
+  echo "请输入落地机IP（例如: 192.168.1.100）："
+  read -r DEST_IP
+done
+
+# 提示用户输入落地机端口，循环直到输入有效值
+while [ -z "$DEST_PORT" ]; do
+  echo "请输入落地机端口（例如: 80）："
+  read -r DEST_PORT
+done
 
 # 创建systemd服务脚本
 echo "创建gost.service文件..."
@@ -60,7 +64,7 @@ echo "重新加载systemd守护进程..."
 systemctl daemon-reload || { echo "systemctl daemon-reload 失败！"; exit 1; }
 
 # 启用gost服务
-echo "启用gost服务..."
+echo "设置gost服务开机自启..."
 systemctl enable gost || { echo "启用服务失败！"; exit 1; }
 
 # 启动gost服务

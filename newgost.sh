@@ -20,10 +20,6 @@ wget -O gost.tar.gz "$DOWNLOAD_URL" || { echo "下载失败！"; exit 1; }
 echo "正在解压文件..."
 tar -xzf gost.tar.gz gost || { echo "解压失败！"; exit 1; }
 
-# 移动gost到/root目录
-echo "移动gost到/root目录..."
-mv gost /root/gost || { echo "移动失败！"; exit 1; }
-
 # 删除下载的压缩包
 echo "删除压缩包..."
 rm -f gost.tar.gz

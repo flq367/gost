@@ -1,0 +1,1 @@
+curl -fsSL https://raw.githubusercontent.com/flq367/gost/main/gm.sh -o /usr/local/bin/gm && chmod +x /usr/local/bin/gm && echo "alias g='gm'" >> ~/.bashrc && source ~/.bashrc && clear && /usr/local/bin/gm

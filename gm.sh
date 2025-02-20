@@ -17,7 +17,8 @@ while true; do
     case $choice in
         1)
             echo "正在安装服务和依赖..."
-            curl -s https://raw.githubusercontent.com/flq367/gost/refs/heads/main/newgost.sh | bash
+            read -p "请输入下载链接 (留空使用默认链接): " download_url
+            curl -s https://raw.githubusercontent.com/flq367/gost/refs/heads/main/newgost.sh | bash -s "$download_url"
             read -p "按回车键继续..."
             ;;
             

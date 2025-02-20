@@ -1,0 +1,12 @@
+[Unit]
+Description=GO Simple Tunnel
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/root/gost -L tcp://:8881/46.203.222.84:45585 -L tcp://:8880/82.152.91.247:47758
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

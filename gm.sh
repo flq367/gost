@@ -5,7 +5,7 @@ while true; do
     echo "================================"
     echo "        GOST 端口转发        "
     echo "================================"
-    echo "1. 新建 GOST 服务"
+    echo "1. 安装服务和依赖"
     echo "2. 新增 GOST 服务"
     echo "3. 手动修改 GOST 服务"
     echo "4. 删除 GOST 服务"
@@ -16,22 +16,8 @@ while true; do
 
     case $choice in
         1)
-            echo "正在新建 GOST 服务..."
-            
-            # 提示用户输入下载链接
-            read -p "请输入 GOST 下载链接 (回车使用默认链接): " download_url
-            
-            # 提示用户输入中转机端口
-            read -p "请输入中转机端口: " relay_port
-            
-            # 提示用户输入落地机 IP
-            read -p "请输入落地机 IP: " destination_ip
-            
-            # 提示用户输入落地机端口
-            read -p "请输入落地机端口: " destination_port
-            
-            # 调用 newgost.sh 脚本并传递参数
-            curl -s https://raw.githubusercontent.com/flq367/gost/refs/heads/main/newgost.sh | bash -s "$download_url" "$relay_port" "$destination_ip" "$destination_port"
+            echo "正在安装服务和依赖..."
+            curl -s https://raw.githubusercontent.com/flq367/gost/refs/heads/main/newgost.sh | bash
             read -p "按回车键继续..."
             ;;
             

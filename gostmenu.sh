@@ -17,7 +17,7 @@ while true; do
     case $choice in
         1)
             echo "正在新建 GOST 服务..."
-            curl -s https://raw.githubusercontent.com/flq367/gost/refs/heads/main/gm.sh | bash
+            curl -s https://raw.githubusercontent.com/flq367/gost/refs/heads/main/newgost.sh | bash
             read -p "按回车键继续..."
             ;;
             

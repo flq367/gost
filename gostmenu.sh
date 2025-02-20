@@ -3,7 +3,7 @@
 while true; do
     clear
     echo "================================"
-    echo "        GOST 服务管理菜单        "
+    echo "        GOST 端口转发        "
     echo "================================"
     echo "1. 新建 GOST 服务"
     echo "2. 新增 GOST 服务"

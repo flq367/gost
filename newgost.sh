@@ -41,48 +41,4 @@ fi
 echo "正在清理临时文件..."
 rm -rf "$TEMP_DIR"
 
-# 提示用户输入中转机端口、落地机 IP 和落地机端口
-echo "请输入中转机端口:"
-read -r TRANSFER_PORT
-echo "请输入落地机 IP:"
-read -r LANDING_IP
-echo "请输入落地机端口:"
-read -r LANDING_PORT
-
-# 如果用户未输入，退出脚本
-if [ -z "$TRANSFER_PORT" ] || [ -z "$LANDING_IP" ] || [ -z "$LANDING_PORT" ]; then
-    echo "中转机端口、落地机 IP 或落地机端口未输入，操作失败"
-    exit 1
-fi
-
-# 创建 /etc/systemd/system/gost.service 文件
-SERVICE_FILE="/etc/systemd/system/gost.service"
-echo "正在创建 $SERVICE_FILE 文件..."
-
-cat <<EOL > "$SERVICE_FILE"
-[Unit]
-Description=GO Simple Tunnel
-After=network.target
-Wants=network.target
-
-[Service]
-Type=simple
-ExecStart=/root/gost -L tcp://:$TRANSFER_PORT/$LANDING_IP:$LANDING_PORT
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-echo "$SERVICE_FILE 文件创建成功"
-
-# 重新加载 systemd 配置
-echo "重新加载 systemd 配置..."
-systemctl daemon-reload
-
-# 启用并启动 gost 服务
-echo "启用并启动 gost 服务..."
-systemctl enable gost || { echo "启用服务失败"; exit 1; }
-systemctl start gost || { echo "启动服务失败"; exit 1; }
-
-echo "gost 服务已成功启用并启动！"
+echo "任务完成！"

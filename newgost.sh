@@ -1,60 +1,63 @@
-#!/bin/sh
-
-# 设置默认下载链接
-DEFAULT_URL="https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz"
+#!/bin/bash
 
 # 提示输入下载链接
-echo "请输入下载链接（留空则使用默认链接: $DEFAULT_URL）："
-read -r DOWNLOAD_URL
-
-# 如果用户未输入，使用默认链接
-if [ -z "$DOWNLOAD_URL" ]; then
-  DOWNLOAD_URL=$DEFAULT_URL
+read -p "请输入下载链接（不输入则默认下载 https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz）：" download_url
+if [ -z "$download_url" ]; then
+    download_url="https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz"
 fi
 
 # 下载文件
-echo "正在下载文件: $DOWNLOAD_URL"
-wget -O gost.tar.gz "$DOWNLOAD_URL" || { echo "下载失败！"; exit 1; }
+echo "开始下载文件..."
+wget "$download_url"
+if [ $? -ne 0 ]; then
+    echo "下载失败，请检查链接或网络。"
+    exit 1
+fi
 
-# 解压文件并提取gost
-echo "正在解压文件..."
-tar -xzf gost.tar.gz gost || { echo "解压失败！"; exit 1; }
+# 获取下载的文件名
+filename=$(basename "$download_url")
+
+# 解压文件并提取 gost 文件
+echo "开始解压文件..."
+tar -xzf "$filename" gost
+if [ $? -ne 0 ]; then
+    echo "解压失败，请检查文件格式或文件完整性。"
+    exit 1
+fi
+
+# 移动 gost 文件到 /root 目录
+mv gost /root/
 
 # 删除下载的压缩包
-echo "删除压缩包..."
-rm -f gost.tar.gz
+rm "$filename"
 
-read -p "请输入中转机端口: " FORWARD_PORT
-read -p "请输入落地机IP: " DEST_IP
-read -p "请输入落地机端口: " DEST_PORT
+# 提示用户输入中转机端口、落地机 IP 和落地机端口
+read -p "请输入中转机端口：" relay_port
+read -p "请输入落地机 IP：" target_ip
+read -p "请输入落地机端口：" target_port
 
-# 创建systemd服务脚本
-echo "创建gost.service文件..."
-cat <<EOF >/etc/systemd/system/gost.service
-[Unit]
+# 生成 systemd 服务脚本
+service_script="[Unit]
 Description=GO Simple Tunnel
 After=network.target
 Wants=network.target
 
 [Service]
 Type=simple
-ExecStart=/root/gost -L tcp://:$FORWARD_PORT/$DEST_IP:$DEST_PORT
+ExecStart=/root/gost -L tcp://:$relay_port/$target_ip:$target_port
 Restart=always
 
 [Install]
-WantedBy=multi-user.target
-EOF
+WantedBy=multi-user.target"
 
-# 重新加载systemd守护进程
-echo "重新加载systemd守护进程..."
-systemctl daemon-reload || { echo "systemctl daemon-reload 失败！"; exit 1; }
+# 创建 /etc/systemd/system/gost.service 文件
+echo "$service_script" > /etc/systemd/system/gost.service
 
-# 启用gost服务
-echo "设置gost服务开机自启..."
-systemctl enable gost || { echo "启用服务失败！"; exit 1; }
+# 重新加载 systemd 管理器配置
+systemctl daemon-reload
 
-# 启动gost服务
-echo "启动gost服务..."
-systemctl start gost || { echo "启动服务失败！"; exit 1; }
+# 启用并启动 gost 服务
+systemctl enable gost
+systemctl start gost
 
-echo "gost服务已配置并启动成功！"
+echo "gost 服务已成功启动。"

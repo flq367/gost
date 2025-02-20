@@ -1,30 +1,66 @@
 #!/bin/sh
 
-# 提示输入下载链接，如不输入则使用默认链接
-read -p "请输入下载链接（默认：https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz）：" DOWNLOAD_URL
-DOWNLOAD_URL=${DOWNLOAD_URL:-"https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz"}
+set -e
 
-# 下载压缩包
-echo "正在下载压缩包..."
-wget -O gost.tar.gz "$DOWNLOAD_URL"
+# 检查root权限
+if [ "$(id -u)" -ne 0 ]; then
+    echo "请以root用户运行此脚本"
+    exit 1
+fi
 
-# 解压压缩包并只提取gost文件
-echo "正在解压并提取gost文件..."
-tar -xzf gost.tar.gz gost
-rm -f gost.tar.gz
+# 检测systemd支持
+if ! command -v systemctl >/dev/null 2>&1; then
+    echo "错误：该系统不支持systemd"
+    exit 1
+fi
 
-# 移动gost文件到/root目录
+# 设置默认下载链接
+default_url="https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz"
+
+# 提示输入下载链接
+printf "请输入下载链接（留空使用默认）: "
+read url
+url="${url:-$default_url}"
+
+# 安装curl或wget（如需要）
+if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
+    if [ -f /etc/alpine-release ]; then
+        apk add --no-cache curl
+    else
+        apt-get update && apt-get install -y curl
+    fi
+fi
+
+# 下载文件
+echo "正在下载文件..."
+if command -v curl >/dev/null 2>&1; then
+    curl -L -o gost.tar.gz "$url"
+else
+    wget -O gost.tar.gz "$url"
+fi
+
+# 解压并提取gost文件
+echo "解压文件中..."
+mkdir -p temp_dir
+tar xzf gost.tar.gz -C temp_dir
+find temp_dir -type f -name gost -exec mv {} . \;
+rm -rf gost.tar.gz temp_dir
+
+# 移动文件并设置权限
 mv gost /root/gost
 chmod +x /root/gost
 
-# 提示用户输入中转机端口、落地机ip、落地机端口
-read -p "请输入中转机端口：" LOCAL_PORT
-read -p "请输入落地机IP：" REMOTE_IP
-read -p "请输入落地机端口：" REMOTE_PORT
+# 获取用户输入
+printf "请输入中转机端口: "
+read relay_port
+printf "请输入落地机IP: "
+read target_ip
+printf "请输入落地机端口: "
+read target_port
 
-# 创建gost.service文件
-echo "正在创建gost.service文件..."
-cat <<EOF > /etc/systemd/system/gost.service
+# 创建systemd服务
+echo "创建服务文件..."
+cat > /etc/systemd/system/gost.service <<EOF
 [Unit]
 Description=GO Simple Tunnel
 After=network.target
@@ -32,16 +68,17 @@ Wants=network.target
 
 [Service]
 Type=simple
-ExecStart=/root/gost -L tcp://:$LOCAL_PORT/$REMOTE_IP:$REMOTE_PORT
+ExecStart=/root/gost -L tcp://:$relay_port/$target_ip:$target_port
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# 启用并启动gost服务
-echo "正在启用并启动gost服务..."
+# 启用并启动服务
+echo "启用服务..."
+systemctl daemon-reload
 systemctl enable gost
 systemctl start gost
 
-echo "gost服务已成功配置并启动！"
+echo "安装完成！"

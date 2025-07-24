@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # 默认下载链接
-DEFAULT_URL="https://github.com/go-gost/gost/releases/download/v3.0.0-nightly.20250218/gost_3.0.0-nightly.20250218_linux_amd64.tar.gz"
+DEFAULT_URL="https://github.com/go-gost/gost/releases/download/v3.1.0/gost_3.1.0_linux_amd64.tar.gz"
+
 
 # 从命令行参数读取下载链接
 DOWNLOAD_URL="$1"
